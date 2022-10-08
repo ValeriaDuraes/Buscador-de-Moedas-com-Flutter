@@ -3,6 +3,8 @@ import 'package:money_search/data/MoneyController.dart';
 import 'package:money_search/model/MoneyModel.dart';
 import 'package:money_search/model/listPersonModel.dart';
 
+import '../../data/internet.dart';
+
 class HomeView extends StatefulWidget {
   const HomeView({Key? key}) : super(key: key);
 
@@ -14,6 +16,20 @@ class HomeView extends StatefulWidget {
 List<ListPersonModel> model = [];
 
 class _HomeViewState extends State<HomeView> {
+
+checkConnection() async{
+  internet = await CheckInternet().checkConnection();
+  setState(() {});
+}
+
+bool internet = true;
+
+@override
+initState() {
+  checkConnection();
+  super.initState();
+}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,6 +37,11 @@ class _HomeViewState extends State<HomeView> {
           title: Text('Lista de pessoas'),
           centerTitle: true,
           backgroundColor: Colors.lightGreen,
+          actions: [
+            Visibility(
+              visible: internet == false,
+              child: Icon(Icons.network_cell_outlined))
+          ],
         ),
         body: FutureBuilder<List<ListPersonModel>>(
           future: MoneyController().getListPerson(),
@@ -101,4 +122,6 @@ class _HomeViewState extends State<HomeView> {
   Future<Null> refresh() async {
     setState(() {});
   }
+
+  ${1:void} ${2:checkConnection}() {}
 }
