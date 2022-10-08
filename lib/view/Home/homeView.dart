@@ -1,5 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:money_search/data/MoneyController.dart';
+import 'package:money_search/data/cache.dart';
+import 'package:money_search/data/string.dart';
 import 'package:money_search/model/MoneyModel.dart';
 import 'package:money_search/model/listPersonModel.dart';
 
@@ -19,6 +23,9 @@ class _HomeViewState extends State<HomeView> {
 
 checkConnection() async{
   internet = await CheckInternet().checkConnection();
+  if (internet == false) {
+    readMemory();
+  }
   setState(() {});
 }
 
@@ -43,15 +50,17 @@ initState() {
               child: Icon(Icons.network_cell_outlined))
           ],
         ),
-        body: FutureBuilder<List<ListPersonModel>>(
-          future: MoneyController().getListPerson(),
-          builder: (context, snapshot) {
-            /// validação de carregamento da conexão
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(
-                child: CircularProgressIndicator(),
-              );
-            }
+        body:internet == false 
+          ? Container() 
+          :FutureBuilder<List<ListPersonModel>>(
+            future: MoneyController().getListPerson(),
+            builder: (context, snapshot) {
+              /// validação de carregamento da conexão
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
 
             /// validação de erro
             if (snapshot.error == true) {
@@ -76,7 +85,7 @@ initState() {
                   pessoa.avatar = null;
               }
             });
-              
+                         
             return ListView.builder(
                 itemCount: model.length,
                 itemBuilder: (context, index) {
@@ -118,10 +127,27 @@ initState() {
           },
         ));
   }
+  verifyData(AsyncSnapshot snapshot) async {
+    try {
+      model.addAll(snapshot.data ?? []);
+      await SecureStorage()
+        .writeSecureData(pessoas, json.encode(snapshot.data));
+    }catch (e) {
+      print("erro ao salvar lista");
+    }
+  }
+
+  readMemory() async {
+    var result = await SecureStorage().readSecureData(pessoas);
+    if (result == null) return;
+    List<ListPersonModel> lista = (json.decode(result) as List)
+      .map((e) => ListPersonModel.fromJson(e))
+      .toList();
+    model.addAll(lista);
+  }
+
 
   Future<Null> refresh() async {
     setState(() {});
   }
-
-  ${1:void} ${2:checkConnection}() {}
 }
